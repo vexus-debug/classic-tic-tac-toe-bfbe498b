@@ -138,7 +138,29 @@ const DentalClinics = () => {
         ]}
       />
       <div className="eye-theme overflow-x-hidden">
+        <section aria-label="Industry-standard, enterprise-grade" className="border-y border-primary/10 bg-muted/30">
+          <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+            <p className="mb-5 text-center text-xs font-semibold uppercase tracking-[0.25em] text-primary">Industry-standard. Enterprise-grade.</p>
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { icon: Smile, t: "Standard dental nomenclature", d: "FDI & Universal tooth numbering with MODBL surface precision." },
+                { icon: Users, t: "Enterprise role security", d: "9 role-based access tiers — staff see only what their job needs." },
+                { icon: FileBarChart, t: "Full audit trail", d: "Timestamped change logs on clinical, billing and prescription entries." },
+                { icon: ShieldCheck, t: "Secure cloud infrastructure", d: "Encrypted connections and automatic cloud backups — no local server to fail." },
+              ].map((b) => (
+                <li key={b.t} className="eye-panel flex gap-3 rounded-2xl p-4">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10"><b.icon className="h-4 w-4 text-primary" /></div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-card-foreground">{b.t}</h3>
+                    <p className="text-xs leading-snug text-muted-foreground">{b.d}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
         <div className="mx-auto max-w-6xl px-4 pb-12 pt-16 sm:px-6 sm:pb-16 lg:pb-24">
+
 
           <section id="features" className="scroll-mt-24">
             <motion.h2 initial="hidden" whileInView="show" viewport={viewport} variants={reveal} className="mb-4 text-2xl font-bold text-foreground md:text-3xl">
