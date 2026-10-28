@@ -13,6 +13,15 @@ export interface UpdateEntry {
 
 export const updates: UpdateEntry[] = [
   {
+    version: "v2.14.1",
+    date: "October 28, 2026",
+    title: "Dental clinics page screenshots restored",
+    kind: "fix",
+    items: [
+      { kind: "fix", text: "The Dental Clinics page shows its dashboard screenshots again, freshly captured from the live app." },
+    ],
+  },
+  {
     version: "v2.14.0",
     date: "October 28, 2026",
     title: "Phased dental treatment plans with insurance estimates",
