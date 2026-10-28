@@ -14,9 +14,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Search, Plus, Pencil, Trash2, Stethoscope, ClipboardList, CheckCircle2, Clock, Eye, CalendarDays } from "lucide-react";
 import { useTreatments, useDeleteTreatment, type Treatment } from "@/hooks/useTreatments";
-import { useTreatmentPlans, useTreatmentPlanItems, useCreateTreatmentPlan, useUpdatePlanItemStatus, useUpdatePlanStatus } from "@/hooks/useTreatmentPlans";
+import { useTreatmentPlans, useCreateTreatmentPlan } from "@/hooks/useTreatmentPlans";
 import { usePatients } from "@/hooks/usePatients";
 import { TreatmentDialog } from "@/components/dashboard/TreatmentDialog";
+import { TreatmentPlanDetail, SurfacePicker, PHASES } from "@/components/dashboard/TreatmentPlanDetail";
 import { useOrg } from "@/hooks/useOrg";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { EmptyState } from "@/components/dashboard/EmptyState";
@@ -67,22 +68,23 @@ export default function TreatmentsPage() {
   const { data: plans = [] } = useTreatmentPlans();
   const { data: patients = [] } = usePatients();
   const createPlan = useCreateTreatmentPlan();
-  const updateItemStatus = useUpdatePlanItemStatus();
-  const updatePlanStatus = useUpdatePlanStatus();
   const [createPlanOpen, setCreatePlanOpen] = useState(false);
   const [viewPlanId, setViewPlanId] = useState<string | null>(null);
-  const { data: planItems = [] } = useTreatmentPlanItems(viewPlanId);
   const [planSearch, setPlanSearch] = useState("");
 
-  const [planForm, setPlanForm] = useState({
-    patient_id: "",
+  const emptyPlanForm = (patientId = "") => ({
+    patient_id: patientId,
     plan_name: "",
     description: "",
     priority: "normal",
     start_date: format(new Date(), "yyyy-MM-dd"),
     target_end_date: "",
+    insurer_name: "",
+    coverage_percent: 0,
   });
-  const [planLineItems, setPlanLineItems] = useState<{ treatment_id: string; description: string; tooth_number: string; visit_number: number; estimated_cost: number; scheduled_date: string; notes: string }[]>([]);
+  const [planForm, setPlanForm] = useState(emptyPlanForm());
+  type PlanLine = { treatment_id: string; cdt_code: string; description: string; tooth_number: string; surfaces: string; phase: number; visit_number: number; estimated_cost: number; scheduled_date: string; notes: string };
+  const [planLineItems, setPlanLineItems] = useState<PlanLine[]>([]);
 
   const filtered = treatments.filter((t) => t.name.toLowerCase().includes(search.toLowerCase()) || t.category.toLowerCase().includes(search.toLowerCase()));
   const categories = [...new Set(treatments.map((t) => t.category))];
@@ -96,9 +98,10 @@ export default function TreatmentsPage() {
     await deleteTreatment.mutateAsync(id);
   };
 
-  const addPlanItem = () => setPlanLineItems((items) => [...items, { treatment_id: "", description: "", tooth_number: "", visit_number: items.length + 1, estimated_cost: 0, scheduled_date: "", notes: "" }]);
+  // New procedures default to Phase 1 (urgent / disease control); clinicians can change it.
+  const addPlanItem = () => setPlanLineItems((items) => [...items, { treatment_id: "", cdt_code: "", description: "", tooth_number: "", surfaces: "", phase: 1, visit_number: items.length + 1, estimated_cost: 0, scheduled_date: "", notes: "" }]);
 
-  const updatePlanLineItem = (index: number, field: string, value: any) => {
+  const updatePlanLineItem = (index: number, field: keyof PlanLine, value: any) => {
     setPlanLineItems((items) => items.map((item, i) => {
       if (i !== index) return item;
       const updated = { ...item, [field]: value };
@@ -107,6 +110,7 @@ export default function TreatmentsPage() {
         if (t) {
           updated.description = t.name;
           updated.estimated_cost = Number(t.price || 0);
+          updated.cdt_code = t.cdt_code || "";
         }
       }
       return updated;
@@ -122,10 +126,15 @@ export default function TreatmentsPage() {
       priority: planForm.priority,
       start_date: planForm.start_date,
       target_end_date: planForm.target_end_date || undefined,
+      insurer_name: planForm.insurer_name.trim() || undefined,
+      coverage_percent: planForm.coverage_percent,
       items: planLineItems.map((i) => ({
         treatment_id: i.treatment_id || undefined,
         description: i.description,
         tooth_number: i.tooth_number || undefined,
+        surfaces: i.surfaces || undefined,
+        phase: i.phase || 1,
+        cdt_code: i.cdt_code || undefined,
         visit_number: i.visit_number,
         estimated_cost: i.estimated_cost,
         scheduled_date: i.scheduled_date || undefined,
@@ -134,7 +143,7 @@ export default function TreatmentsPage() {
     }, {
       onSuccess: () => {
         setCreatePlanOpen(false);
-        setPlanForm({ patient_id: ctxPatientId || "", plan_name: "", description: "", priority: "normal", start_date: format(new Date(), "yyyy-MM-dd"), target_end_date: "" });
+        setPlanForm(emptyPlanForm(ctxPatientId || ""));
         setPlanLineItems([]);
       },
     });
@@ -343,7 +352,7 @@ export default function TreatmentsPage() {
         <DialogContent className="max-w-2xl backdrop-blur-xl bg-card/95 max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>New Treatment Plan</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">Patient *</Label>
                 <Select value={planForm.patient_id} onValueChange={(v) => setPlanForm((f) => ({ ...f, patient_id: v }))}>
@@ -360,7 +369,7 @@ export default function TreatmentsPage() {
                 <Input value={planForm.plan_name} onChange={(e) => setPlanForm((f) => ({ ...f, plan_name: e.target.value }))} placeholder="e.g. Full mouth restoration" />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">Priority</Label>
                 <Select value={planForm.priority} onValueChange={(v) => setPlanForm((f) => ({ ...f, priority: v }))}>
@@ -382,6 +391,16 @@ export default function TreatmentsPage() {
                 <Input type="date" value={planForm.target_end_date} onChange={(e) => setPlanForm((f) => ({ ...f, target_end_date: e.target.value }))} />
               </div>
             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1 sm:col-span-2">
+                <Label className="text-xs">Insurance provider (optional)</Label>
+                <Input value={planForm.insurer_name} onChange={(e) => setPlanForm((f) => ({ ...f, insurer_name: e.target.value }))} placeholder="e.g. AXA Mansard HMO" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Coverage %</Label>
+                <Input type="number" min={0} max={100} value={planForm.coverage_percent} onChange={(e) => setPlanForm((f) => ({ ...f, coverage_percent: Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)) }))} />
+              </div>
+            </div>
             <div className="space-y-1">
               <Label className="text-xs">Description</Label>
               <Textarea value={planForm.description} onChange={(e) => setPlanForm((f) => ({ ...f, description: e.target.value }))} rows={2} placeholder="Brief description of the treatment plan..." />
@@ -400,28 +419,43 @@ export default function TreatmentsPage() {
                   <CardContent className="p-3 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold text-muted-foreground">Visit {item.visit_number}</span>
-                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-red-500" onClick={() => setPlanLineItems((items) => items.filter((_, i) => i !== idx))}>×</Button>
+                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-destructive" aria-label="Remove visit" onClick={() => setPlanLineItems((items) => items.filter((_, i) => i !== idx))}>×</Button>
                     </div>
-                    <div className="grid grid-cols-12 gap-2">
-                      <div className="col-span-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                      <div className="sm:col-span-5">
                         <Select value={item.treatment_id} onValueChange={(v) => updatePlanLineItem(idx, "treatment_id", v)}>
                           <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Treatment" /></SelectTrigger>
                           <SelectContent>
                             {treatments.map((t) => (
-                              <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                              <SelectItem key={t.id} value={t.id}>{t.cdt_code ? `${t.cdt_code} · ` : ""}{t.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="col-span-2">
+                      <div className="sm:col-span-4">
+                        <Select value={String(item.phase)} onValueChange={(v) => updatePlanLineItem(idx, "phase", Number(v))}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(PHASES).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="sm:col-span-3">
+                        <Input className="h-8 text-xs font-mono" placeholder="Code e.g. D2740" value={item.cdt_code} onChange={(e) => updatePlanLineItem(idx, "cdt_code", e.target.value.toUpperCase())} />
+                      </div>
+                      <div className="sm:col-span-3">
                         <Input className="h-8 text-xs" placeholder={terms.siteLabel} value={item.tooth_number} onChange={(e) => updatePlanLineItem(idx, "tooth_number", e.target.value)} />
                       </div>
-                      <div className="col-span-2">
+                      <div className="sm:col-span-3">
                         <Input type="number" className="h-8 text-xs" placeholder="Cost" value={item.estimated_cost} onChange={(e) => updatePlanLineItem(idx, "estimated_cost", parseFloat(e.target.value) || 0)} />
                       </div>
-                      <div className="col-span-3">
+                      <div className="sm:col-span-6">
                         <Input type="date" className="h-8 text-xs" value={item.scheduled_date} onChange={(e) => updatePlanLineItem(idx, "scheduled_date", e.target.value)} />
                       </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-muted-foreground">Surfaces</span>
+                      <SurfacePicker value={item.surfaces} onChange={(v) => updatePlanLineItem(idx, "surfaces", v)} />
                     </div>
                   </CardContent>
                 </Card>
@@ -442,80 +476,16 @@ export default function TreatmentsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ===== VIEW PLAN DIALOG ===== */}
-      <Dialog open={!!viewPlanId} onOpenChange={(open) => { if (!open) setViewPlanId(null); }}>
-        <DialogContent className="max-w-2xl backdrop-blur-xl bg-card/95 max-h-[85vh] overflow-y-auto">
-          {viewingPlan && (
-            <>
-              <DialogHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <DialogTitle>{viewingPlan.plan_name}</DialogTitle>
-                    <p className="text-sm text-muted-foreground mt-1">{viewingPlan.patient_name}</p>
-                  </div>
-                  <Badge className={`${planStatusStyles[viewingPlan.status] || ""}`}>{viewingPlan.status}</Badge>
-                </div>
-              </DialogHeader>
-              {viewingPlan.description && <p className="text-sm text-muted-foreground">{viewingPlan.description}</p>}
-              <div className="flex gap-4 text-xs text-muted-foreground">
-                <span>Start: {viewingPlan.start_date || "—"}</span>
-                <span>Target: {viewingPlan.target_end_date || "—"}</span>
-                <span className="font-semibold text-foreground">{formatCurrency(viewingPlan.total_estimated_cost)}</span>
-                <span className="ml-2 text-xs">Billable now (in progress + completed): <span className="font-semibold text-secondary">{formatCurrency(planItems.filter((i: any) => i.status === "completed" || i.status === "in-progress").reduce((s: number, i: any) => s + Number(i.estimated_cost || 0), 0))}</span></span>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Visits</h3>
-                {planItems.map((item) => (
-                  <Card key={item.id} className="bg-muted/20 border-border/30">
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-lg bg-secondary/10 flex items-center justify-center text-xs font-bold text-secondary">
-                            {item.visit_number}
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">{item.description}</p>
-                            <div className="flex gap-2 text-[10px] text-muted-foreground mt-0.5">
-                              {item.tooth_number && <span>{terms.sitePrefix}: {item.tooth_number}</span>}
-                              {item.scheduled_date && <span>Scheduled: {item.scheduled_date}</span>}
-                              <span>{formatCurrency(item.estimated_cost)}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge className={`text-[10px] ${itemStatusStyles[item.status] || ""}`}>{isInvoiced(item) ? "invoiced" : item.status}</Badge>
-                          {isClinical && !isInvoiced(item) && (
-                            <Select value={item.status} onValueChange={(v) => updateItemStatus.mutate({ id: item.id, status: v })}>
-                              <SelectTrigger className="h-7 w-24 text-[10px]"><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="scheduled">Scheduled</SelectItem>
-                                <SelectItem value="in-progress">In Progress</SelectItem>
-                                <SelectItem value="completed">Completed</SelectItem>
-                                <SelectItem value="skipped">Skipped</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              {isClinical && viewingPlan.status === "active" && (
-                <DialogFooter className="gap-2">
-                  <Button variant="outline" size="sm" onClick={() => updatePlanStatus.mutate({ id: viewingPlan.id, status: "paused" })}>Pause Plan</Button>
-                  <Button size="sm" className="bg-secondary hover:bg-secondary/90" onClick={() => updatePlanStatus.mutate({ id: viewingPlan.id, status: "completed" })}>
-                    <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Complete Plan
-                  </Button>
-                </DialogFooter>
-              )}
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* ===== VIEW PLAN (phased detail) ===== */}
+      <TreatmentPlanDetail
+        plan={viewingPlan}
+        treatments={treatments}
+        open={!!viewPlanId}
+        onOpenChange={(open) => { if (!open) setViewPlanId(null); }}
+        canEdit={isClinical}
+        canDelete={isAdmin}
+        siteLabel={terms.siteLabel}
+      />
     </div>
   );
 }
