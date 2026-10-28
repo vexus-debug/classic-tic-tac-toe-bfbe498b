@@ -20,14 +20,13 @@ import {
   Pill,
   Receipt,
 } from "lucide-react";
-import shotPatientsAsset from "@/assets/current-dashboard/dental-patients-2026-10.png.asset.json";
-import shotAppointmentsAsset from "@/assets/current-dashboard/dental-appointments-2026-10.png.asset.json";
-import shotChartsAsset from "@/assets/current-dashboard/dental-charts-2026-10.png.asset.json";
-import shotBillingAsset from "@/assets/current-dashboard/dental-billing-2026-10.png.asset.json";
-import shotInventoryAsset from "@/assets/current-dashboard/dental-inventory-2026-10.png.asset.json";
-import shotDashboardAsset from "@/assets/current-dashboard/dental-dashboard-2026-10.png.asset.json";
-import shotTreatmentsAsset from "@/assets/current-dashboard/dental-treatments-2026-10.png.asset.json";
-const shotTreatments = shotTreatmentsAsset.url;
+import shotPatients from "@/assets/dashboard-shots/dental-patients.png";
+import shotAppointments from "@/assets/dashboard-shots/dental-appointments.png";
+import shotCharts from "@/assets/dashboard-shots/dental-charts.png";
+import shotBilling from "@/assets/dashboard-shots/dental-billing.png";
+import shotInventory from "@/assets/dashboard-shots/dental-inventory.png";
+import shotDashboard from "@/assets/dashboard-shots/dental-dashboard.png";
+import shotTreatments from "@/assets/dashboard-shots/dental-treatments.png";
 import { LocalSeo } from "@/site/components/LocalSeo";
 import { CapabilityMatrix, ClosingBanner, PricingEstimator, type CapabilityGroup } from "@/site/components/industry/IndustrySections";
 
@@ -38,12 +37,6 @@ const matrixGroups: CapabilityGroup[] = [
 ];
 
 const WHATSAPP = "https://wa.me/2349017758165?text=Hello%20I%20would%20like%20to%20know%20more%20about%20Clinexus";
-const shotPatients = shotPatientsAsset.url;
-const shotAppointments = shotAppointmentsAsset.url;
-const shotCharts = shotChartsAsset.url;
-const shotBilling = shotBillingAsset.url;
-const shotInventory = shotInventoryAsset.url;
-const shotDashboard = shotDashboardAsset.url;
 const EASE = [0.22, 1, 0.36, 1] as const;
 const viewport = { once: true, margin: "-70px" };
 const reveal = { hidden: { opacity: 0, y: 34 }, show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } } };
