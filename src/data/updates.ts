@@ -13,6 +13,20 @@ export interface UpdateEntry {
 
 export const updates: UpdateEntry[] = [
   {
+    version: "v2.14.0",
+    date: "October 28, 2026",
+    title: "Phased dental treatment plans with insurance estimates",
+    kind: "feature",
+    items: [
+      { kind: "feature", text: "Treatment plans are grouped into 4 clinical phases: Urgent, Perio, Restorative and Maintenance." },
+      { kind: "feature", text: "Pick exact tooth surfaces (M, O, D, B, L) for each procedure, and the procedure code fills in from the catalog." },
+      { kind: "feature", text: "Add an insurance provider and coverage % to see what insurance pays versus what the patient pays." },
+      { kind: "feature", text: "Print a clean estimate sheet with dentist and patient signature lines." },
+      { kind: "improvement", text: "Edit, reorder or remove procedures right inside a plan, and pause, resume, archive or complete plans." },
+      { kind: "improvement", text: "The new plan form stacks neatly on phones; new procedures start in Phase 1 unless you change it." },
+    ],
+  },
+  {
     version: "v2.13.1",
     date: "October 28, 2026",
     title: "Clearer treatment catalog that works on phones",

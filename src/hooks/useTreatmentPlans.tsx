@@ -95,6 +95,8 @@ export function useCreateTreatmentPlan() {
       priority?: string;
       start_date?: string;
       target_end_date?: string;
+      insurer_name?: string;
+      coverage_percent?: number;
       items: { treatment_id?: string; description: string; tooth_number?: string; surfaces?: string; phase?: number; cdt_code?: string; visit_number: number; estimated_cost: number; scheduled_date?: string; notes?: string }[];
     }) => {
       const totalCost = input.items.reduce((s, i) => s + i.estimated_cost, 0);
@@ -111,6 +113,8 @@ export function useCreateTreatmentPlan() {
           start_date: input.start_date || null,
           target_end_date: input.target_end_date || null,
           total_estimated_cost: totalCost,
+          insurer_name: input.insurer_name || null,
+          coverage_percent: Math.min(100, Math.max(0, Number(input.coverage_percent || 0))),
           created_by: userId,
         })
         .select()
