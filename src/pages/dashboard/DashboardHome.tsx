@@ -40,6 +40,7 @@ import DlabOverviewPage from "@/pages/dashboard/dlab/DlabOverviewPage";
 import { EyeTodayScreen } from "@/components/dashboard/eye/EyeTodayScreen";
 import { useAddToWaitingList } from "@/hooks/useWaitingList";
 import { DentistWaitingRoomCard } from "@/components/dashboard/DentistWaitingRoomCard";
+import { MorningHuddleCard } from "@/components/dashboard/MorningHuddleCard";
 import {
   useCurrentUserName,
   useDashboardStats,
@@ -429,6 +430,8 @@ function StandardDashboardHome() {
       {kpis.length > 0 && <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" data-tour="dashboard-kpi-cards">
         {kpis.map((kpi, i) => <KpiTile key={kpi.label} {...kpi} tone={kpiTones[mode][i]} />)}
       </div>}
+
+      {(mode === "owner" || mode === "finance") && <MorningHuddleCard basePath={basePath} />}
 
       {showClinicFloor && (
         <Card className="border-border/60" data-tour="patient-flow">

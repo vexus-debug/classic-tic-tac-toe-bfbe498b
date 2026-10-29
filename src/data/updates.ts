@@ -13,6 +13,17 @@ export interface UpdateEntry {
 
 export const updates: UpdateEntry[] = [
   {
+    version: "v2.16.0",
+    date: "October 29, 2026",
+    title: "Morning huddle on the dental overview",
+    kind: "feature",
+    items: [
+      { kind: "feature", text: "See today's booked production against a daily goal you can set yourself." },
+      { kind: "feature", text: "Doctor vs hygiene split of today's production." },
+      { kind: "feature", text: "Total value of planned treatment not yet booked, with a link to follow up." },
+    ],
+  },
+  {
     version: "v2.15.0",
     date: "October 29, 2026",
     title: "Industry-standard dental overview",
