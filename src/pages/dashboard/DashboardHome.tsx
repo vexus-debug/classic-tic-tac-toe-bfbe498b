@@ -421,28 +421,68 @@ function StandardDashboardHome() {
         {kpis.map((kpi, i) => <KpiTile key={kpi.label} {...kpi} tone={kpiTones[mode][i]} />)}
       </div>}
 
-      {showClinicFloor && <Card className="border-border/60">
-        <CardContent className="p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Chairs right now</p>
-            <div className="flex gap-3 text-[11px] text-muted-foreground">
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-info" />In chair</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-success" />Free</span>
-            </div>
-          </div>
-          {chairs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No chairs booked today.</p>
-          ) : (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-              {chairs.map(([chair, occupant]) => (
-                <div key={chair} className={cn("rounded-md border p-3", occupant ? "border-info/30 bg-info/10" : "border-success/30 bg-success/10")}>
-                  <div className="flex items-center gap-1.5">
-                    <span className={cn("h-2 w-2 rounded-full", occupant ? "bg-info animate-pulse" : "bg-success")} />
-                    <p className="truncate text-xs font-semibold text-foreground">{chair}</p>
-                  </div>
-                  <p className={cn("mt-1 truncate text-xs", occupant ? "text-info" : "text-success")}>{occupant ? occupant.patientName : "Available"}</p>
+      {showClinicFloor && (
+        <Card className="border-border/60" data-tour="patient-flow">
+          <CardContent className="p-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Patient flow today</p>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+              {flowStages.map((stage) => (
+                <div key={stage.label} className="rounded-md border border-border/60 p-3">
+                  <p className={cn("text-2xl font-bold tabular-nums", stage.className)}>{stage.value}</p>
+                  <p className="truncate text-[11px] font-medium text-muted-foreground">{stage.label}</p>
                 </div>
               ))}
+            </div>
+            {schedule.length > 0 && (
+              <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                <span className="bg-success" style={{ width: `${(completed / schedule.length) * 100}%` }} />
+                <span className="bg-info" style={{ width: `${(inChairCount / schedule.length) * 100}%` }} />
+                <span className="bg-warning" style={{ width: `${(activeQueue.length / schedule.length) * 100}%` }} />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {showClinicFloor && <Card className="border-border/60">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
+          <div>
+            <CardTitle className="text-base">Operatory board</CardTitle>
+            <CardDescription>Every chair's day at a glance</CardDescription>
+          </div>
+          <div className="hidden gap-3 text-[11px] text-muted-foreground sm:flex">
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-info" />In chair</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-success" />Done</span>
+            <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-warning" />Booked</span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {operatories.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">No chairs booked today.</p>
+          ) : (
+            <div className="flex gap-3 overflow-x-auto pb-1">
+              {operatories.map(([chair, items]) => {
+                const occupant = items.find((i) => i.status.startsWith("in"));
+                return (
+                  <div key={chair} className="w-56 shrink-0 rounded-md border border-border/60 bg-muted/30">
+                    <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className={cn("h-2 w-2 rounded-full", occupant ? "bg-info animate-pulse" : "bg-success")} />
+                        <p className="truncate text-xs font-semibold text-foreground">{chair}</p>
+                      </div>
+                      <span className="text-[11px] tabular-nums text-muted-foreground">{items.length} booked</span>
+                    </div>
+                    <div className="max-h-64 space-y-1.5 overflow-y-auto p-2">
+                      {items.map((item) => (
+                        <Link key={item.id} to={item.patientId ? `${basePath}/patients/${item.patientId}` : `${basePath}/appointments`} className={cn("block rounded px-2 py-1.5 text-xs transition-colors hover:opacity-80", toneSurface[statusTone(item.status)])}>
+                          <span className="font-bold tabular-nums">{item.time}</span> <span className="font-semibold text-foreground">{item.patientName}</span>
+                          <span className="block truncate text-muted-foreground">{item.treatment} · {item.dentist}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>
