@@ -13,6 +13,16 @@ export interface UpdateEntry {
 
 export const updates: UpdateEntry[] = [
   {
+    version: "v2.15.0",
+    date: "October 29, 2026",
+    title: "Industry-standard dental overview",
+    kind: "improvement",
+    items: [
+      { kind: "feature", text: "New patient flow strip: booked, confirmed, waiting, in chair, completed and no-shows for today." },
+      { kind: "feature", text: "New operatory board shows every chair's full day side by side, with tap-through to each patient." },
+    ],
+  },
+  {
     version: "v2.14.1",
     date: "October 28, 2026",
     title: "Dental clinics page screenshots restored",
