@@ -370,16 +370,25 @@ function StandardDashboardHome() {
 
   const showOnboarding = mode === "owner" && s.totalPatients === 0;
 
-  const chairs = useMemo(() => {
-    const map = new Map<string, ScheduleItem | null>();
+  const operatories = useMemo(() => {
+    const map = new Map<string, ScheduleItem[]>();
     schedule.forEach((item) => {
-      if (!item.chair) return;
-      const current = map.get(item.chair);
-      if (item.status === "in-progress" || item.status === "in_progress") map.set(item.chair, item);
-      else if (current === undefined) map.set(item.chair, null);
+      const key = item.chair && item.chair !== "-" ? item.chair : "Unassigned";
+      map.set(key, [...(map.get(key) || []), item]);
     });
-    return Array.from(map.entries()).slice(0, 6);
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }));
   }, [schedule]);
+
+  const inChairCount = schedule.filter((i) => i.status.startsWith("in")).length;
+  const missedCount = schedule.filter((i) => ["cancelled", "no-show", "no_show"].includes(i.status)).length;
+  const flowStages = [
+    { label: "Booked", value: schedule.length, className: "text-foreground" },
+    { label: "Confirmed", value: schedule.filter((i) => i.status === "confirmed").length, className: "text-info" },
+    { label: "Waiting", value: activeQueue.length, className: "text-warning" },
+    { label: "In chair", value: inChairCount, className: "text-info" },
+    { label: "Completed", value: completed, className: "text-success" },
+    { label: "No-show / cancelled", value: missedCount, className: "text-destructive" },
+  ];
 
   const statusTone = (status: string): Tone => {
     if (status === "completed") return "success";
